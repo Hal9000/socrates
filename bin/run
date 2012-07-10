@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+# encoding: UTF-8
+
+$: << File.expand_path(File.join(File.dirname(__FILE__), '../lib'))
+
+require 'rubygems'
+require 'socrates'
+require 'ui/dumbtext'
+
+session = Socrates::Session.new
+topic = session.select_topic
+
+puts "Selected: #{topic}"

@@ -1,0 +1,84 @@
+#!/usr/bin/env ruby
+
+# encoding: UTF-8
+
+$: << File.expand_path(File.join(File.dirname(__FILE__), '../lib'))
+
+require 'rubygems'
+require 'socrates'
+
+File.unlink("socrates.db")
+
+db = Socrates::DataStore.new
+
+db.create_table :questions do
+  primary_key :id
+  String      :topic    # substitute an ID??
+  String      :text
+  String      :correct_answer
+  String      :child    # subclass or nil
+end
+
+db.create_table :complex_MCs do
+  primary_key :id
+  Integer     :parent   # question
+  String      :options  # pool, ordered, n of k
+  String      :child    # subclass or nil
+end
+
+db.create_table :dynamic_questions do
+  primary_key :id
+  Integer     :safe_level
+end
+
+db.create_table :pools do
+  primary_key :id
+  String      :path     # applies from this topic downward
+  String      :name     # 
+  String      :choices
+end
+
+db.create_table :users do
+  primary_key :id
+  String      :name          # User name
+  String      :hash_pass     # Hashed password
+  String      :full_name
+  String      :email
+end
+
+db.create_table :stats do
+  primary_key :id
+  String      :userid
+  Integer     :question_id
+  Integer     :rights
+  Integer     :wrongs
+  DateTime    :last_right
+  DateTime    :last_wrong
+end
+
+###
+
+tree = Socrates::TopicStore
+root = tree::Root
+
+comp = tree.add!("comp", "Computing")
+  lang = tree.add!("lang", "Languages")
+    ruby = tree.add("ruby", "Ruby")
+sci  = tree.add!("sci", "Science", root)
+  astro = tree.add!("astro", "Astronomy")
+    solar = tree.add("solar", "The Solar System")
+    cosmo = tree.add("cosmo", "Cosmology and the Universe")
+
+tree.save
+
+Topic.current = solar
+
+db.new_question("Long considered a planet, it has now been demoted.", "Pluto")
+db.new_question("Commonly known as the Red Planet.", "Mars")
+db.new_question("A --- has often been referred to as a 'dirty snowball.'", "comet")
+db.new_question("The largest known asteroid is ---.", "Ceres")
+
+Topic.current = cosmo
+
+db.new_question("More distant galaxies display a shift toward the ---.", "red")
+
