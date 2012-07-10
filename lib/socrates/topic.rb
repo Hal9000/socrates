@@ -3,7 +3,7 @@ class Socrates::Topic
     attr_accessor :current
   end
 
-  attr_accessor :name, :path, :desc, :children, :parent
+  attr_accessor :name, :path, :desc, :children, :parent, :id
 
   def initialize(name, desc, parent=Socrates::Topic.current)
     @name, @desc = name, desc
@@ -13,7 +13,7 @@ class Socrates::Topic
       @path = "/"
     else
       @path = ""
-      @path = parent.path.dup unless parent.path == "/"
+      @path = (parent.path.dup rescue "") # unless parent.path == "/"
       @path << "/" + @name
     end
   end

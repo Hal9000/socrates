@@ -4,6 +4,7 @@ class Socrates::Question
   def ask          # GUI would just grab @text...
     puts @text
     get_response
+    report
   end
 
   def get_response
@@ -30,25 +31,37 @@ class Socrates::Session
   def select_topic
     root = Socrates::TopicStore::Root
     node = root
+    puts "\n  Socrates top level:\n "
     loop do
       list = node.topics
-      puts "#{node.desc}  (#{node.path})\n "
-      puts "    0. Previous level" unless node == root
-      list.each_with_index do |topic, i|
-        flag = topic.children.empty? ? " " : "*"
-        puts "  #{flag} #{i+1}. #{topic.name}"
+      if node != root
+        puts "\n-- #{node.desc}:  #{node.path}\n "
       end
-      STDOUT.print "\n    Choice = "
+      list.each_with_index do |topic, i|
+        more = topic.children.empty? ? "   " : "[+]"
+        puts "  #{i+1}  #{topic.desc}   #{more}"
+      end
+      puts "  *  All the above topics"
+      puts "  b  Back one level" unless node == root
+      puts "  q  Quit"
+
+      STDOUT.print "\n    Choice  = "
       STDOUT.flush
-      choice = gets.to_i - 1  # back to 0-based
-      if choice == -1
-        node = node.parent
+      choice = gets.chomp
+      case choice
+        when /[0-9]+/
+          node = list[choice.to_i - 1]
+        when "b"
+          node = node.parent
+        when "q"
+          return nil
       else
-        node = list[choice]
+        puts "Invalid choice '#{choice}'"
+        redo
       end
       break if node.children.empty?
     end
-    Topic.current = node
+    return node
   end
 end
 

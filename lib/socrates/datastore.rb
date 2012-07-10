@@ -10,7 +10,10 @@ Topic = Socrates::Topic
 class Socrates::TopicStore
   class << self
     attr_accessor :store  # basically a hash; path=>topic
+    attr_accessor :count
   end
+
+  @count = 0
 
   @store = YAML.load(File.read("topics.yaml")) rescue {}
 # @store.each_pair {|path, topic| puts "#{path} is child of #{topic.parent.pathname rescue 'root'}" }
@@ -22,6 +25,7 @@ class Socrates::TopicStore
     raise BadName unless name =~ LowerAlphaNum || parent.nil?
 # puts "Creating: #{[name, desc, (parent.name rescue 'Root')].inspect}"
     topic = Topic.new(name, desc, parent)
+    topic.id = Socrates::TopicStore.count += 1
     parent.children << topic unless parent.nil?
     @store[topic.path] = topic    
   end
@@ -85,9 +89,15 @@ p [sym, args]
   end
 
   def new_question(text, correct)
-    topic = Socrates::Topic.current.path
-    @db[:questions].insert(topic: topic, text: text, correct_answer: correct)
+    topic = Socrates::Topic.current
+    @db[:questions].insert(topic_id: topic.id, text: text, correct_answer: correct)
     # child will be nil - no inheritance
+  end
+
+  def get_questions(topic, num=10)
+    ds = @db[:questions].filter(:topic_id => topic.id)
+    list = ds.to_a[0..num-1]
+    list.map {|hash| Socrates::Question.new(hash[:text], hash[:correct_answer]) }
   end
 end
 

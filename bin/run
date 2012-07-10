@@ -5,10 +5,21 @@
 $: << File.expand_path(File.join(File.dirname(__FILE__), '../lib'))
 
 require 'rubygems'
+require 'pp'
+
 require 'socrates'
 require 'ui/dumbtext'
 
 session = Socrates::Session.new
 topic = session.select_topic
+if topic.nil?
+  puts "Exiting...\n\n "
+  exit
+end
 
-puts "Selected: #{topic}"
+Topic.current = topic
+
+list = session.get_questions(topic)
+pp list
+
+list.each {|q| q.ask }

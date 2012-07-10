@@ -13,7 +13,7 @@ db = Socrates::DataStore.new
 
 db.create_table :questions do
   primary_key :id
-  String      :topic    # substitute an ID??
+  String      :topic_id
   String      :text
   String      :correct_answer
   String      :child    # subclass or nil
