@@ -20,6 +20,5 @@ end
 Topic.current = topic
 
 list = session.get_questions(topic)
-pp list
 
 list.each {|q| q.ask }

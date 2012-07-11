@@ -13,9 +13,17 @@ class Socrates::Topic
       @path = "/"
     else
       @path = ""
-      @path = (parent.path.dup rescue "") # unless parent.path == "/"
+      @path = (parent.path.dup rescue "") unless parent.path == "/"
       @path << "/" + @name
     end
+  end
+
+  def inspect
+    "#@path [#{@children.size}]"
+  end
+
+  def to_s
+    inspect
   end
 
   def topics

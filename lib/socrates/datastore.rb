@@ -2,12 +2,14 @@ require './lib/socrates'
 abort unless defined?(Socrates) and Socrates.is_a? Class
 
 require 'rubygems'
+require 'pp'
 require 'bundler/setup'
 require 'sequel'
 
 Topic = Socrates::Topic
 
 class Socrates::TopicStore
+puts "--- Entering TopicStore class def"
   class << self
     attr_accessor :store  # basically a hash; path=>topic
     attr_accessor :count
@@ -15,15 +17,36 @@ class Socrates::TopicStore
 
   @count = 0
 
+puts "--- Reading yaml"
   @store = YAML.load(File.read("topics.yaml")) rescue {}
 # @store.each_pair {|path, topic| puts "#{path} is child of #{topic.parent.pathname rescue 'root'}" }
 
   LowerAlphaNum = /[a-z][a-z0-9_]*/
   BadName = Exception.new("Invalid pathname")
+
+puts "--- Read yaml..."
+puts "--- store ="
+pp @store
+  
+  def self.make_root
+    t = Topic.allocate
+    t.name = "/"
+    t.path = "/"
+    t.parent = nil
+    t.children = []
+    t.id = Socrates::TopicStore.count += 1
+    Topic.current = t
+  end
+
+# Root = @store["/"] || Socrates::TopicStore.add!("/", "")
+  Root = (@store["/"] ||= Socrates::TopicStore.make_root)
+puts "--- Defined Root..."
+puts "--- store ="
+pp @store
   
   def self.add(name, desc, parent=Socrates::Topic.current)
     raise BadName unless name =~ LowerAlphaNum || parent.nil?
-# puts "Creating: #{[name, desc, (parent.name rescue 'Root')].inspect}"
+puts "Creating: #{[name, desc, (parent.name rescue 'Root')].inspect}"
     topic = Topic.new(name, desc, parent)
     topic.id = Socrates::TopicStore.count += 1
     parent.children << topic unless parent.nil?
@@ -56,8 +79,6 @@ class Socrates::TopicStore
   def self.save(file="topics.yaml")
     File.open(file, "w") {|f| f.puts @store.to_yaml }
   end
-
-  Root = @store["/"] || Socrates::TopicStore.add!("/", "")
 end
 
 ###
@@ -95,8 +116,15 @@ p [sym, args]
   end
 
   def get_questions(topic, num=10)
-    ds = @db[:questions].filter(:topic_id => topic.id)
-    list = ds.to_a[0..num-1]
+    ds = @db[:questions]
+    if topic.children.any?
+      array = topic.children.map {|t| t.id }
+      ds = ds.filter(topic_id: array)
+    else
+      ds = ds.filter(topic_id: topic.id)
+    end
+    list = ds.to_a.sort_by { rand }
+    list = list[0..num-1]
     list.map {|hash| Socrates::Question.new(hash[:text], hash[:correct_answer]) }
   end
 end

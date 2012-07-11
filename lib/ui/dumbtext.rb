@@ -19,7 +19,7 @@ class Socrates::Question
     if right?
       puts "Right!"
     else
-      puts "Wrong - answer was #@correct_answer"
+      puts "Wrong. Correct answer is: #@correct_answer"
     end
     puts
   end
@@ -51,6 +51,8 @@ class Socrates::Session
       case choice
         when /[0-9]+/
           node = list[choice.to_i - 1]
+        when '*'
+          break   # return node
         when "b"
           node = node.parent
         when "q"

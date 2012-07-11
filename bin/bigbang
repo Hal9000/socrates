@@ -13,9 +13,10 @@ db = Socrates::DataStore.new
 
 db.create_table :questions do
   primary_key :id
-  String      :topic_id
+  Integer     :topic_id
   String      :text
   String      :correct_answer
+  String      :options
   String      :child    # subclass or nil
 end
 
@@ -61,13 +62,22 @@ end
 tree = Socrates::TopicStore
 root = tree::Root
 
+puts "curr = #{Topic.current}"
+
 comp = tree.add!("comp", "Computing")
+puts "root = #{root}"  #####
   lang = tree.add!("lang", "Languages")
+puts "root = #{root}"  #####
     ruby = tree.add("ruby", "Ruby")
+puts "root = #{root}"  #####
 sci  = tree.add!("sci", "Science", root)
+puts "root = #{root}"  #####
   astro = tree.add!("astro", "Astronomy")
+puts "root = #{root}"  #####
     solar = tree.add("solar", "The Solar System")
+puts "root = #{root}"  #####
     cosmo = tree.add("cosmo", "Cosmology and the Universe")
+puts "root = #{root}"  #####
 
 tree.save
 
