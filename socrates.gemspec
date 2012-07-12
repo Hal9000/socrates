@@ -25,7 +25,7 @@ Gem::Specification.new do |s|
 
 # s.add_runtime_dependency %q<activesupport>, [">= 3.0.10"]
 
-  s.add_development_dependency %q<bundler>, ["~> 1.0.0"]
+  #s.add_development_dependency %q<bundler>, ["~> 1.0.0"]
   s.add_development_dependency %q<cucumber>
   s.add_development_dependency %q<rspec>, [">= 2.5.0"]
 # s.add_development_dependency %q<simplecov>, [">= 0"]
@@ -41,6 +41,6 @@ Gem::Specification.new do |s|
       s.add_development_dependency %q<growl_notify>
       s.add_development_dependency %q<rb-fsevent>
     when /linux/
-      gem 'rb-inotify', :require => false
+      s.add_development_dependency %q<rb-inotify>
   end
 end
