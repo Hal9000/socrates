@@ -10,6 +10,15 @@
 #SimpleCov.start do
 #  add_filter "/vendor/"
 #end
+#
+
+require 'bundler/setup'
+
+$: << "lib"
+require 'socrates'
+
+Bundler.require(:default, :test) if defined?(Bundler)
+
 
 # require 'mocha'
 # 
