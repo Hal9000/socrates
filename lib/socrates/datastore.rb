@@ -9,7 +9,7 @@ require 'sequel'
 Topic = Socrates::Topic
 
 class Socrates::TopicStore
-puts "--- Entering TopicStore class def"
+# puts "--- Entering TopicStore class def"
   class << self
     attr_accessor :store  # basically a hash; path=>topic
     attr_accessor :count
@@ -17,16 +17,16 @@ puts "--- Entering TopicStore class def"
 
   @count = 0
 
-puts "--- Reading yaml"
+# puts "--- Reading yaml"
   @store = YAML.load(File.read("topics.yaml")) rescue {}
 # @store.each_pair {|path, topic| puts "#{path} is child of #{topic.parent.pathname rescue 'root'}" }
 
   LowerAlphaNum = /[a-z][a-z0-9_]*/
   BadName = Exception.new("Invalid pathname")
 
-puts "--- Read yaml..."
-puts "--- store ="
-pp @store
+# puts "--- Read yaml..."
+# puts "--- store ="
+# pp @store
   
   def self.make_root
     t = Topic.allocate
@@ -40,13 +40,13 @@ pp @store
 
 # Root = @store["/"] || Socrates::TopicStore.add!("/", "")
   Root = (@store["/"] ||= Socrates::TopicStore.make_root)
-puts "--- Defined Root..."
-puts "--- store ="
-pp @store
+# puts "--- Defined Root..."
+# puts "--- store ="
+# pp @store
   
   def self.add(name, desc, parent=Socrates::Topic.current)
     raise BadName unless name =~ LowerAlphaNum || parent.nil?
-puts "Creating: #{[name, desc, (parent.name rescue 'Root')].inspect}"
+# puts "Creating: #{[name, desc, (parent.name rescue 'Root')].inspect}"
     topic = Topic.new(name, desc, parent)
     topic.id = Socrates::TopicStore.count += 1
     parent.children << topic unless parent.nil?
@@ -89,7 +89,6 @@ class Socrates::DataStore
   end
 
   def method_missing(sym, *args, &block)
-p [sym, args]
     @db.send(sym, *args, &block)
   end
 
@@ -111,21 +110,72 @@ p [sym, args]
 
   def new_question(text, correct)
     topic = Socrates::Topic.current
-    @db[:questions].insert(topic_id: topic.id, text: text, correct_answer: correct)
+    @db[:question].insert(:topic_id => topic.id, :text => text, :correct_answer => correct)
     # child will be nil - no inheritance
   end
 
-  def get_questions(topic, num=10)
-    ds = @db[:questions]
-    if topic.children.any?
-      array = topic.children.map {|t| t.id }
-      ds = ds.filter(topic_id: array)
-    else
-      ds = ds.filter(topic_id: topic.id)
+  def new_selection(text, choices, correct)
+    topic = Socrates::Topic.current
+    correct = correct.inspect unless correct.is_a? String
+    choices = choices.inspect unless choices.is_a? String
+    ques = @db[:question].insert(:topic_id => topic.id, :text => text, :correct_answer => correct,
+                                  :child => "Selection")
+    @db[:selection].insert("question_id" => ques, :choices => choices)
+  end
+
+  def new_dynamic(source)
+    topic = Socrates::Topic.current
+  end
+
+  def get_inherited(parent_hash, parent_class_name)
+    data = parent_hash.dup  # result of lookup on parent table
+    sym = (table_name(parent_class_name).to_s + "_id").to_sym
+
+    class_name = parent_class_name  # will change in loop
+    child = parent_hash[:child]     # will change in loop
+    hash = parent_hash              # will change in loop
+    loop do  # arbitrary levels of inheritance
+      break if child.nil? || child.empty?
+      class_name = child
+      table = table_name(child)
+      ds = @db[table]
+      hash = ds.filter(sym => hash[sym]).first
+      data.update(hash)
+      child = hash[:child]
     end
+    final_class = Socrates.const_get(class_name)
+    final_class.make(data)
+  end
+
+  def get_questions(topic, num=10)
+    ds = @db[:question]
+    target = topic.id
+    subs = topic.children
+    target = subs.map {|t| t.id } if subs.any?
+    ds = ds.filter(:topic_id => target)
     list = ds.to_a.sort_by { rand }
     list = list[0..num-1]
-    list.map {|hash| Socrates::Question.new(hash[:text], hash[:correct_answer]) }
+    
+    list.map do |hash|
+      get_inherited(hash, "Question")
+    end
+  end
+
+  private 
+
+  def cjoin(array)
+    array.join("|")
+  end
+
+  def csplit(string)
+    sep = string[0]
+    string[1..-1].split(sep)
+  end
+
+  def table_name(klass)
+    words = klass.to_s.scan(/[A-Z][a-z0-9_]*/)
+    words.map! {|w| w.downcase }
+    words.join("_").to_sym
   end
 end
 

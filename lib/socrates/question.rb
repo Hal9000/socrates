@@ -1,6 +1,11 @@
 abort unless Socrates.is_a? Class
 
 class Socrates::Question
+  def self.make(data)
+    text, correct = data.values_at(:text, :correct_answer)
+    self.new(text, correct)
+  end
+
   def initialize(text, correct_answer)
     @text, @correct_answer = text, correct_answer
   end
@@ -14,7 +19,7 @@ class Socrates::Question
   end
 
   def wrong?
-    @response != @correct_answer
+    ! right?
   end
 
   def record_stats

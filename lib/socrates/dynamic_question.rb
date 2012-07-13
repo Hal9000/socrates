@@ -1,6 +1,7 @@
 abort unless Socrates.is_a? Class
 
 class Socrates::DynamicQuestion
-  def initialize
+  def initialize(source)
+    @text, @correct_answer = eval(source) 
   end
 end

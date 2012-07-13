@@ -25,6 +25,42 @@ class Socrates::Question
   end
 end
 
+
+class Socrates::Selection
+  def ask
+    puts @text
+    label = "  a"
+    @choices.each do |choice| 
+      puts "#{label}. #{choice}" 
+      label = label.succ
+    end
+    print "Choices = "
+    STDOUT.flush
+    get_response
+    report
+  end
+
+  def get_response
+    str = gets.chomp
+    list = str.scan(/./)
+    indices = []
+    list.each do |char|
+      offset = char[0..0].ord - "a".ord
+      indices << offset
+    end
+    @response = indices
+  end
+
+  def report
+    if right?
+      puts "Right!"
+    else
+      puts "Wrong. Correct answer is: #{@choices.values_at(*@correct_answer)}"
+    end
+    puts
+  end
+end
+
 ############
 
 class Socrates::Session

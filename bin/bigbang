@@ -4,15 +4,16 @@
 
 $: << File.expand_path(File.join(File.dirname(__FILE__), '../lib'))
 
+File.unlink("socrates.db") rescue nil
+File.unlink("topics.yaml") rescue nil   # must be before socrates is required
+
 require 'rubygems'
 require 'socrates'
 
-File.unlink("socrates.db")
-
 db = Socrates::DataStore.new
 
-db.create_table :questions do
-  primary_key :id
+db.create_table "question" do
+  primary_key :question_id
   Integer     :topic_id
   String      :text
   String      :correct_answer
@@ -20,27 +21,40 @@ db.create_table :questions do
   String      :child    # subclass or nil
 end
 
-db.create_table :complex_MCs do
-  primary_key :id
-  Integer     :parent   # question
-  String      :options  # pool, ordered, n of k
+db.create_table "selection" do
+  primary_key :selection_id
+  Integer     :question_id      # parent question id
+  String      :choices
+end
+
+db.create_table "multiple_choice" do
+  primary_key :multiple_choice_id
+  Integer     :question_id      # parent question id
+  String      :choices
   String      :child    # subclass or nil
 end
 
-db.create_table :dynamic_questions do
-  primary_key :id
+db.create_table "complex_mc" do
+  primary_key :complex_mc_id
+  Integer     :question_id      # parent question id
+# String      :options  # pool, ordered, n of k
+end
+
+db.create_table :dynamic_question do
+  primary_key :dynamic_question_id
+  Integer     :question_id      # parent question id
   Integer     :safe_level
 end
 
-db.create_table :pools do
-  primary_key :id
+db.create_table :choice_pool do
+  primary_key :choice_pool_id
   String      :path     # applies from this topic downward
   String      :name     # 
   String      :choices
 end
 
-db.create_table :users do
-  primary_key :id
+db.create_table :user do
+  primary_key :user_id
   String      :name          # User name
   String      :hash_pass     # Hashed password
   String      :full_name
@@ -48,9 +62,9 @@ db.create_table :users do
 end
 
 db.create_table :stats do
-  primary_key :id
-  String      :userid
-  Integer     :question_id
+  primary_key :stats_id
+  String      :user_id
+  Integer     :qid
   Integer     :rights
   Integer     :wrongs
   DateTime    :last_right
@@ -62,22 +76,22 @@ end
 tree = Socrates::TopicStore
 root = tree::Root
 
-puts "curr = #{Topic.current}"
+#puts "curr = #{Topic.current}"
 
 comp = tree.add!("comp", "Computing")
-puts "root = #{root}"  #####
+#puts "root = #{root}"  #####
   lang = tree.add!("lang", "Languages")
-puts "root = #{root}"  #####
+#puts "root = #{root}"  #####
     ruby = tree.add("ruby", "Ruby")
-puts "root = #{root}"  #####
+#puts "root = #{root}"  #####
 sci  = tree.add!("sci", "Science", root)
-puts "root = #{root}"  #####
+#puts "root = #{root}"  #####
   astro = tree.add!("astro", "Astronomy")
-puts "root = #{root}"  #####
+#puts "root = #{root}"  #####
     solar = tree.add("solar", "The Solar System")
-puts "root = #{root}"  #####
+#puts "root = #{root}"  #####
     cosmo = tree.add("cosmo", "Cosmology and the Universe")
-puts "root = #{root}"  #####
+#puts "root = #{root}"  #####
 
 tree.save
 
@@ -87,8 +101,8 @@ db.new_question("Long considered a planet, it has now been demoted.", "Pluto")
 db.new_question("Commonly known as the Red Planet.", "Mars")
 db.new_question("A --- has often been referred to as a 'dirty snowball.'", "comet")
 db.new_question("The largest known asteroid is ---.", "Ceres")
+db.new_selection("Which are not planets?", "|Earth|Mars|the moon|Jupiter|Ceres|Vesta", [2,4,5])
 
 Topic.current = cosmo
 
 db.new_question("More distant galaxies display a shift toward the ---.", "red")
-
