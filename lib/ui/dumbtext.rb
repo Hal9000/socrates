@@ -11,23 +11,23 @@ class Socrates::Question
     @response = gets.chomp
     raise unless validate
   rescue
-    puts "Empty response!"
+    puts "Invalid response!"
     retry
   end
 
-  def report
+  def report(text_answer=@correct_answer)
     if right?
       puts "Right!"
     else
-      puts "Wrong. Correct answer is: #@correct_answer"
+      puts "Wrong. Correct answer is: #{text_answer}"
     end
     puts
   end
 end
 
-
 class Socrates::Selection
   def ask
+# puts "Sel ask: @choices = #@choices"
     puts @text
     label = "  a"
     @choices.each do |choice| 
@@ -37,7 +37,8 @@ class Socrates::Selection
     print "Choices = "
     STDOUT.flush
     get_response
-    report
+puts "correct = #{@correct_answer.inspect}"
+    report(@choices.values_at(*@correct_answer).inspect)
   end
 
   def get_response
@@ -49,15 +50,34 @@ class Socrates::Selection
       indices << offset
     end
     @response = indices
+    raise unless validate
+  end
+end
+
+class Socrates::MultipleChoice
+  def ask
+    puts @text
+    label = "  a"
+    @choices.each do |choice| 
+      puts "#{label}. #{choice}" 
+      label = label.succ
+    end
+    print "Choice = "
+    STDOUT.flush
+    get_response
+    report(@choices[@correct_answer])
   end
 
-  def report
-    if right?
-      puts "Right!"
-    else
-      puts "Wrong. Correct answer is: #{@choices.values_at(*@correct_answer)}"
-    end
-    puts
+  def validate
+    (0..@choices.size-1).include? @response
+  end
+
+  def get_response
+    str = gets.chomp
+    raise unless str.length == 1
+    offset = str.ord - "a".ord
+    @response = offset
+    raise unless validate
   end
 end
 
@@ -77,6 +97,7 @@ class Socrates::Session
         more = topic.children.empty? ? "   " : "[+]"
         puts "  #{i+1}  #{topic.desc}   #{more}"
       end
+      puts
       puts "  *  All the above topics"
       puts "  b  Back one level" unless node == root
       puts "  q  Quit"

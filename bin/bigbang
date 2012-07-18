@@ -12,88 +12,42 @@ require 'socrates'
 
 db = Socrates::DataStore.new
 
-db.create_table "question" do
-  primary_key :question_id
-  Integer     :topic_id
-  String      :text
-  String      :correct_answer
-  String      :options
-  String      :child    # subclass or nil
-end
-
-db.create_table "selection" do
-  primary_key :selection_id
-  Integer     :question_id      # parent question id
-  String      :choices
-end
-
-db.create_table "multiple_choice" do
-  primary_key :multiple_choice_id
-  Integer     :question_id      # parent question id
-  String      :choices
-  String      :child    # subclass or nil
-end
-
-db.create_table "complex_mc" do
-  primary_key :complex_mc_id
-  Integer     :question_id      # parent question id
-# String      :options  # pool, ordered, n of k
-end
-
-db.create_table :dynamic_question do
-  primary_key :dynamic_question_id
-  Integer     :question_id      # parent question id
-  Integer     :safe_level
-end
-
-db.create_table :choice_pool do
-  primary_key :choice_pool_id
-  String      :path     # applies from this topic downward
-  String      :name     # 
-  String      :choices
-end
-
-db.create_table :user do
-  primary_key :user_id
-  String      :name          # User name
-  String      :hash_pass     # Hashed password
-  String      :full_name
-  String      :email
-end
-
-db.create_table :stats do
-  primary_key :stats_id
-  String      :user_id
-  Integer     :qid
-  Integer     :rights
-  Integer     :wrongs
-  DateTime    :last_right
-  DateTime    :last_wrong
-end
+db.make_table :question, :text, :options, :child, :topic_id, correct_answer: Yaml
+db.make_table :selection, :child, :question_id, choices: Yaml
+db.make_table :multiple_choice, :question_id, :child, {}
+# db.make_table :complex_mc, :question_id, :choice_pool_id
+db.make_table :dynamic_question, question_id: Integer
+db.make_table :choice_pool, :path, :name, choices: Yaml  # would Array work?
+db.make_table :user, :name, :hash_pass, :full_name, :email, {}
+db.make_table :stats, :user_id, :question_id, rights: Integer, wrongs: Integer, 
+              last_right: DateTime, last_wrong: DateTime
 
 ###
 
 tree = Socrates::TopicStore
 root = tree::Root
 
-#puts "curr = #{Topic.current}"
-
-comp = tree.add!("comp", "Computing")
-#puts "root = #{root}"  #####
+test = tree.add!("test", "TESTING")
+comp = tree.add!("comp", "Computing", root)
   lang = tree.add!("lang", "Languages")
-#puts "root = #{root}"  #####
     ruby = tree.add("ruby", "Ruby")
-#puts "root = #{root}"  #####
 sci  = tree.add!("sci", "Science", root)
-#puts "root = #{root}"  #####
   astro = tree.add!("astro", "Astronomy")
-#puts "root = #{root}"  #####
     solar = tree.add("solar", "The Solar System")
-#puts "root = #{root}"  #####
     cosmo = tree.add("cosmo", "Cosmology and the Universe")
-#puts "root = #{root}"  #####
+  math = tree.add!("math", "Mathematics", sci)
+    mental = tree.add("mental", "Mental arithmetic")
+popc = tree.add!("popc", "Pop Culture", root)
 
-tree.save
+tree.save  # creates topics.yaml
+
+Topic.current = test
+db.new_selection("Which are not planets?", 
+                ["Earth", "Mars", "the moon", "Jupiter", "Ceres", "Vesta"], [2,4,5])
+db.new_mult_choice("Which is not an asteroid?", %w[Vesta Ceres Io Eros], 2)
+
+
+##############
 
 Topic.current = solar
 
@@ -101,8 +55,19 @@ db.new_question("Long considered a planet, it has now been demoted.", "Pluto")
 db.new_question("Commonly known as the Red Planet.", "Mars")
 db.new_question("A --- has often been referred to as a 'dirty snowball.'", "comet")
 db.new_question("The largest known asteroid is ---.", "Ceres")
-db.new_selection("Which are not planets?", "|Earth|Mars|the moon|Jupiter|Ceres|Vesta", [2,4,5])
+db.new_selection("Which are not planets?", 
+                 ["Earth", "Mars", "the moon", "Jupiter", "Ceres", "Vesta"], [2,4,5])
+db.new_mult_choice("Which is not an asteroid?", %w[Vesta Ceres Io Eros], 2)
 
 Topic.current = cosmo
 
-db.new_question("More distant galaxies display a shift toward the ---.", "red")
+db.new_question("The light from more distant galaxies displays a shift toward the ---.", "red")
+db.new_question("The --- Constant determines the universe's rate of expansion.", "Hubble")
+
+Topic.current = mental
+
+db.new_dynamic 'x = rand(40); sqr = x*x; "What (integer) is the square root of #{sqr}?"', 'x.to_s'
+db.new_dynamic 'x = rand(40); cube = x**3; "What (integer) is the cube root of #{cube}?"', 'x.to_s'
+db.new_dynamic 'x = rand(40); sqr = x*x; "What is #{x} squared?"', 'sqr.to_s'
+db.new_dynamic 'x = rand(40); cube = x**3; "What is #{x} cubed?"', 'cube.to_s'
+

@@ -25,4 +25,6 @@ Topic.current = topic
 
 list = session.get_questions(topic)
 
+puts
+
 list.each {|q| q.ask }
