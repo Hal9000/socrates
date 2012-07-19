@@ -30,5 +30,11 @@ class Socrates::Topic
     @children.each {|child| child.parent = self } # dammit...
     @children
   end
+
+  def descendants
+    list = @children
+    @children.each {|child| puts "child is #{child} (#{child.class})"; list += child.descendants }
+    list
+  end
 end
 

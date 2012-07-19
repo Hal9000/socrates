@@ -1,6 +1,9 @@
 require 'pp'
 
 class Socrates::Question
+
+  BadEntry = Exception.new("Invalid response")
+
   def ask          # GUI would just grab @text...
     puts @text
     get_response
@@ -9,8 +12,8 @@ class Socrates::Question
 
   def get_response
     @response = gets.chomp
-    raise unless validate
-  rescue
+    raise BadEntry unless validate
+  rescue BadEntry
     puts "Invalid response!"
     retry
   end
@@ -66,6 +69,9 @@ class Socrates::MultipleChoice
     STDOUT.flush
     get_response
     report(@choices[@correct_answer])
+  rescue
+    puts "Invalid response..."
+    retry
   end
 
   def validate
@@ -77,7 +83,38 @@ class Socrates::MultipleChoice
     raise unless str.length == 1
     offset = str.ord - "a".ord
     @response = offset
-    raise unless validate
+    raise BadEntry unless validate
+  end
+end
+
+class Socrates::TrueFalse
+  def ask
+    puts @text
+    print "(T/F): "
+    STDOUT.flush
+    print "Choice = "
+    get_response
+    report
+  rescue BadEntry
+    puts "Invalid response..."
+    retry
+  end
+
+  def validate
+    %w[T t F f].include? @response
+  end
+
+  def get_response
+    str = gets.chomp
+    @response = str
+    raise BadEntry unless validate
+    @response = 
+      case str
+        when /t/i then true 
+        when /f/i then false
+      end
+# puts "resp = #@response (#{@response.class})"
+# puts "choices = #{@choices.inspect}"
   end
 end
 

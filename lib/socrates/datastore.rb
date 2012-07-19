@@ -219,10 +219,16 @@ puts "*** ques = #{ques.inspect}"
   end
 
   def new_mult_choice(text, choices, correct)
-    topic = Socrates::Topic.current
     ques = new_record(:question, :text => text, :correct_answer => correct, :child => "Selection")
     new_record(:selection, :question_id => ques, :choices => choices, :child => "MultipleChoice")
     new_record(:multiple_choice, :question_id => ques)  # redundant database access
+  end
+
+  def new_tf(text, correct)
+    ques = new_record(:question, :text => text, :correct_answer => correct, :child => "Selection")
+    new_record(:selection, :question_id => ques, :choices => [true, false], :child => "MultipleChoice")
+    new_record(:multiple_choice, :question_id => ques, :child => "TrueFalse")  # redundant?
+    new_record(:true_false, :question_id => ques)  # redundant?
   end
 
   def new_dynamic(source, correct)
@@ -242,6 +248,8 @@ puts "*** ques = #{ques.inspect}"
 # puts "x1 = #{x1.inspect}"
 # x2 = x1[:inspect]
 # puts "x2 = #{x2.inspect}"
+puts "table = #{table}"
+pp @xform[table]
     @xform[table][:inspect].each do |fld|
       data[fld] = case sym
         when :in  then data[fld].inspect
@@ -292,7 +300,7 @@ puts "**** loop: hash2 = #{hash.inspect}"
   def get_questions(topic, num=10)
     ds = @db[:question]
     target = topic.id
-    subs = topic.children
+    subs = topic.descendants
     target = subs.map {|t| t.id } if subs.any?
     ds = ds.filter(:topic_id => target)
     list = ds.to_a.sort_by { rand }
