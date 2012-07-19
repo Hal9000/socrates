@@ -12,4 +12,8 @@ class Socrates::Session
   def select_topic
     # UI-dependent
   end
+
+  def session_report
+    # UI-dependent
+  end
 end

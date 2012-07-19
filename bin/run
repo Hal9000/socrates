@@ -23,8 +23,8 @@ end
 
 Topic.current = topic
 
-list = session.get_questions(topic)
+session.ask_questions(topic)
+session.report
 
 puts
 
-list.each {|q| q.ask }

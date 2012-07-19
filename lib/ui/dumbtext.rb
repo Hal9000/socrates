@@ -19,12 +19,14 @@ class Socrates::Question
   end
 
   def report(text_answer=@correct_answer)
-    if right?
+    outcome = right?
+    if outcome
       puts "Right!"
     else
       puts "Wrong. Correct answer is: #{text_answer}"
     end
     puts
+    return outcome
   end
 end
 
@@ -158,6 +160,20 @@ class Socrates::Session
       break if node.children.empty?
     end
     return node
+  end
+
+  def ask_questions(topic, max=10)
+    list = get_questions(topic, max)
+    @outcomes = {false => 0, true => 0}
+    list.each do |question|
+      outcome = question.ask
+      @outcomes[outcome] += 1
+    end
+  end
+
+  def report
+    rights, wrongs = @outcomes.values_at(true, false)
+    puts "Session: #{rights} correct, #{wrongs} incorrect"
   end
 end
 
