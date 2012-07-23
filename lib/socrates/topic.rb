@@ -33,7 +33,7 @@ class Socrates::Topic
 
   def descendants
     list = @children
-    @children.each {|child| puts "child is #{child} (#{child.class})"; list += child.descendants }
+    @children.each {|child| list += child.descendants }
     list
   end
 end

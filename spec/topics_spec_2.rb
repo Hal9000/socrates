@@ -4,16 +4,16 @@ require 'spec_helper'
 $: << "lib"
 require 'socrates'
 
+describe Socrates::Topic do
+
+  subject { Socrates::TopicStore::Root }
+  
   T = Socrates::TopicStore
      Sci = T.add("sci", "Science")
      Comp = T.add("comp", "Computing")
        Lang = T.add("lang", "Languages", Comp)
      Popc = T.add("popc", "Pop Culture and Trivia")
 
-describe Socrates::Topic do
-
-  subject { Socrates::TopicStore::Root }
-  
   it "should allow adding multiple toplevel topics"  do
     Comp.class.should == Socrates::Topic
     Comp.parent.should == subject

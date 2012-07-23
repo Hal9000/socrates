@@ -1,6 +1,4 @@
-abort unless Socrates.is_a? Class
-
 class Socrates::ComplexMultipleChoice 
-  def initialize(text, answer, options)
+  def initialize(text, correct_answer, choice_pool, max=nil)
   end
 end

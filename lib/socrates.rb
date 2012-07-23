@@ -1,5 +1,5 @@
 class Socrates
-  VERSION = '0.0.1'
+  Version = '0.0.1'
 
   class Session               # A drill or Q&A session
   end
@@ -40,10 +40,4 @@ require 'socrates/complex_mc'
 require 'socrates/dynamic_question'
 require 'socrates/topic'
 require 'socrates/datastore'
-
-### Remainder of Socrates class
-
-class Socrates
-
-end
 

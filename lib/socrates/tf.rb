@@ -1,9 +1,7 @@
-abort unless Socrates.is_a? Class
-
 class Socrates::TrueFalse
   def self.make(data)
-    text, correct = data.values_at(:text, :correct_answer)
-    self.new(text, correct)
+    args = correct = data.values_at(:text, :correct_answer)
+    self.new(*args)
   end
 
   def initialize(text, answer)

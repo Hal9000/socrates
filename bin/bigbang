@@ -12,23 +12,23 @@ require 'socrates'
 
 db = Socrates::DataStore.new
 
-db.make_table :question, :text, :options, :child, :topic_id, correct_answer: Yaml
-db.make_table :selection, :child, :question_id, choices: Yaml
-db.make_table :multiple_choice, :question_id, :child, {}
-db.make_table :true_false, :question_id, :child, {}
-# db.make_table :complex_mc, :question_id, :choice_pool_id
-db.make_table :dynamic_question, question_id: Integer
-db.make_table :choice_pool, :path, :name, choices: Yaml  # would Array work?
-db.make_table :user, :name, :hash_pass, :full_name, :email, {}
-db.make_table :stats, :user_id, :question_id, rights: Integer, wrongs: Integer, 
-              last_right: DateTime, last_wrong: DateTime
+db.make_table :question, [:text, :options, :child, :topic_id], :correct_answer => Yaml
+db.make_table :selection, [:child, :question_id], :choices => Yaml
+db.make_table :multiple_choice, [:question_id, :child]
+db.make_table :true_false, [:question_id, :child]
+# db.make_table :complex_mc, [:question_id], :choice_pool_id => Integer
+db.make_table :dynamic_question, [:question_id]
+db.make_table :choice_pool, [:path, :name], :choices => Yaml  # would Array work?
+db.make_table :user, [:name, :hash_pass, :full_name, :email]
+db.make_table :stats, [:user_id, :question_id], :rights => Integer, 
+              :wrongs => Integer, :last_right => DateTime, :last_wrong => DateTime
 
 ###
 
 tree = Socrates::TopicStore
 root = tree::Root
 
-test = tree.add!("test", "TESTING")
+# test = tree.add!("test", "TESTING")
 comp = tree.add!("comp", "Computing", root)
   lang = tree.add!("lang", "Languages")
     ruby = tree.add("ruby", "Ruby")
@@ -42,14 +42,22 @@ popc = tree.add!("popc", "Pop Culture", root)
 
 tree.save  # creates topics.yaml
 
-Topic.current = test
-db.new_selection("Which are not planets?", 
-                ["Earth", "Mars", "the moon", "Jupiter", "Ceres", "Vesta"], [2,4,5])
-db.new_mult_choice("Which is not an asteroid?", %w[Vesta Ceres Io Eros], 2)
-db.new_tf("The sky is blue.", true)
+# Topic.current = test
+# db.new_selection("Which are not planets?", 
+#                 ["Earth", "Mars", "the moon", "Jupiter", "Ceres", "Vesta"], [2,4,5])
+# db.new_mult_choice("Which is not an asteroid?", %w[Vesta Ceres Io Eros], 2)
+# db.new_tf("The sky is blue.", true)
+
+
 
 
 ##############
+
+Topic.current = ruby
+
+db.new_question("In Ruby 1.8, the --- class included Enumerable; but in 1.9, it doesn't.", 
+                "String")
+db.new_mult_choice("Which is not a core class?", %w[Integer Bignum Number Fixnum Float], 2)
 
 Topic.current = solar
 

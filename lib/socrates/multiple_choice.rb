@@ -1,11 +1,7 @@
-abort unless Socrates.is_a? Class
-
 class Socrates::MultipleChoice 
   def self.make(data)
-    text, choices, correct = data.values_at(:text, :choices, :correct_answer)
-#   correct = YAML.load(correct) if correct.is_a? String
-#   choices = YAML.load(choices) if choices.is_a? String
-    self.new(text, choices, correct)
+    *args = data.values_at(:text, :choices, :correct_answer)
+    self.new(*args)
   end
 
   def initialize(text, choices, correct)

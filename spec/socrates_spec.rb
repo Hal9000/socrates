@@ -8,12 +8,13 @@ describe Socrates do
 	subject { Socrates.new }
 
 	it "should have a version" do
-		subject.class::VERSION.should_not be_nil
+		subject.class::Version.should_not be_nil
 	end
 
 	it "should have a version matching the gemspec" do
-    gemspec = eval("$SAFE = 2; " + File.read("../Socrates.gemspec"))
-		subject.class::VERSION.should == gemspec.version.to_s
+    safety = RUBY_PLATFORM == "java" ? "" : "$SAFE = 2; "
+    gemspec = eval(safety + File.read("../Socrates.gemspec"))
+		subject.class::Version.should == gemspec.version.to_s
 	end
 
 end

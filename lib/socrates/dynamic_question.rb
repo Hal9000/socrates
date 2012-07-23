@@ -1,21 +1,18 @@
-abort unless Socrates.is_a? Class
-
 class Socrates::DynamicQuestion
   def self.make(data)
-    text = data[:text]
-    correct = data[:correct_answer]
+    text, correct = data.values_at(:text, :correct_answer)
     source = <<-EOF
       text = (#{text})
       correct = (#{correct})
       [text, correct]
     EOF
     thread = Thread.new do
-      $SAFE = 4  # thread-local
+      $SAFE = 4  unless RUBY_PLATFORM == "java" # thread-local
       Thread.current[:return] = eval(source)
     end
     thread.join
-    text, correct = thread[:return]
-    self.new(text, correct)
+    args = thread[:return]
+    self.new(*args)
   end
 
   def initialize(text, correct)

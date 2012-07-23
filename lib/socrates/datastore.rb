@@ -1,6 +1,3 @@
-require './lib/socrates'
-abort unless defined?(Socrates) and Socrates.is_a? Class
-
 require 'rubygems'
 require 'pp'
 require 'bundler/setup'
@@ -19,17 +16,11 @@ class Socrates::TopicStore
 
   @count = 0
 
-# puts "--- Reading yaml"
   @store = YAML.load(File.read("topics.yaml")) rescue {}
-# @store.each_pair {|path, topic| puts "#{path} is child of #{topic.parent.pathname rescue 'root'}" }
 
   LowerAlphaNum = /[a-z][a-z0-9_]*/
   BadName = Exception.new("Invalid pathname")
 
-# puts "--- Read yaml..."
-# puts "--- store ="
-# pp @store
-  
   def self.make_root
     t = Topic.allocate
     t.name = "/"
@@ -40,15 +31,10 @@ class Socrates::TopicStore
     Topic.current = t
   end
 
-# Root = @store["/"] || Socrates::TopicStore.add!("/", "")
   Root = (@store["/"] ||= Socrates::TopicStore.make_root)
-# puts "--- Defined Root..."
-# puts "--- store ="
-# pp @store
   
   def self.add(name, desc, parent=Socrates::Topic.current)
     raise BadName unless name =~ LowerAlphaNum || parent.nil?
-# puts "Creating: #{[name, desc, (parent.name rescue 'Root')].inspect}"
     topic = Topic.new(name, desc, parent)
     topic.id = Socrates::TopicStore.count += 1
     parent.children << topic unless parent.nil?
@@ -87,7 +73,12 @@ end
 
 class Socrates::DataStore
   def initialize
-    @db = ::Sequel.connect("sqlite://socrates.db")
+    if RUBY_PLATFORM == "java"
+      prefix = "jdbc:sqlite:"
+    else
+      prefix = "sqlite://"
+    end
+    @db = ::Sequel.connect("#{prefix}socrates.db")
     @xform = {}
     @fields = {}
     metadata_found = nil
@@ -100,7 +91,6 @@ class Socrates::DataStore
 
     if metadata_found
       array.each do |hash| 
-# puts "HASH = #{hash.inspect}"
         table = hash[:table]
         table_sym = table.to_sym
         @xform[table_sym]  = YAML.load(hash[:transform])
@@ -131,14 +121,17 @@ class Socrates::DataStore
 
   ##  above largely unused?
 
-  def make_table(*args, others)
-# puts "=== make_table: args = #{args.inspect} others = #{others.inspect}"
-    table = args.shift.to_s   # in case already sym
+# def make_child_table(child, parent, *args, others)
+#   # Not implemented yet
+# end
+
+  def make_table(table, args, others={})
+    table = table.to_s       # probably already was
     table_sym = table.to_sym
     @fields[table_sym] = args + others.keys
-    @xform[table_sym] = {inspect: [], yaml: []}
+    @xform[table_sym] = {:inspect => [], :yaml => []}
     xform, fields = @xform, @fields  # because of change in 'self'
-    @db.create_table table do
+    @db.create_table table_sym do
       primary_key table+"_id"
       args.each do |field| 
         if field.to_s =~ /_id$/
@@ -148,7 +141,6 @@ class Socrates::DataStore
         end
       end
       others.each_pair do |field, klass|
-# puts ">>> others loop - #{[field, klass].inspect}"
         case klass.to_s.to_sym
           when :Integer;  Integer field
           when :String;   String field
@@ -159,24 +151,17 @@ class Socrates::DataStore
             xform[table_sym][:inspect] << field
           when :Yaml
             String field
-# puts "Got here: #{[table_sym, field].inspect}"
             xform[table_sym][:yaml] << field
         end
       end
     end
     # Now save metadata...
     args_hash = {}
-    args.each {|arg| args_hash.update(arg => "String") }
-    args = args_hash.update(others)
-    args.each_pair {|k, v| args[k] = v.to_s }
-# puts "SAVE table_sym = #{table.inspect}"
-# puts "SAVE xform = "
-# pp xform
-# puts "SAVE xform[table_sym] = "
-# pp xform[table_sym]
-# puts "SAVE fields[table_sym] = "
-# pp fields[table_sym]
-    @db[:metadata].insert(table: table, transform: xform[table_sym].to_yaml, fields: fields[table_sym].to_yaml)
+    args.each {|arg| args_hash.update(arg => :String) }
+    args_hash.update(others)
+    args_hash.each_pair {|k, v| args_hash[k] = v.to_s.to_sym }
+    @db[:metadata].insert(:table => table, :transform => xform[table_sym].to_yaml, 
+                          :fields => fields[table_sym].to_yaml)
   end
 
   def new_topic(name, desc)
@@ -189,20 +174,10 @@ class Socrates::DataStore
 
   def new_record(table, data)
     data.update(:topic_id => Socrates::Topic.current.id)  # hmm
-# puts "NEW REC = #{table} : #{data.inspect}"
-# puts "before xform in: data = "
-# pp data
-# puts "---"
     transform(table, data, :in)  # into db
-# puts "---"
-# puts "after  xform in: data = "
-# pp data
     to_insert = {}
-# puts "@fields[table] = #{@fields[table]}"
     @fields[table].each {|fld| to_insert[fld] = data[fld] }
-    val = @db[table].insert(to_insert)
-puts "**** new_rec returns #{val.inspect}"
-    val
+    @db[table].insert(to_insert)
   end
 
   def new_question(text, correct)
@@ -210,11 +185,7 @@ puts "**** new_rec returns #{val.inspect}"
   end
 
   def new_selection(text, choices, correct)
-#puts "---- xform = "
-#pp @xform
-#puts "---"
     ques = new_record(:question, :text => text, :correct_answer => correct, :child => "Selection")
-puts "*** ques = #{ques.inspect}"
     new_record(:selection, :question_id => ques, :choices => choices)
   end
 
@@ -234,39 +205,21 @@ puts "*** ques = #{ques.inspect}"
   def new_dynamic(source, correct)
     ques = new_record(:question, :text => source, :correct_answer => correct, :child => "DynamicQuestion")
     new_record(:dynamic_question, :question_id => ques)  # redundant database access
-#puts "dynamic fields = "
-#puts @fields[:dynamic_question]
   end
 
   def transform(table, data, sym)
-# puts "TRANSFORM - #{[table, data.inspect, sym]}"
-# puts "XFORM = "
-# pp @xform
-# puts "XFORM[table] = "
-# pp @xform[table]
-# x1 = @xform[table]
-# puts "x1 = #{x1.inspect}"
-# x2 = x1[:inspect]
-# puts "x2 = #{x2.inspect}"
-puts "table = #{table}"
-pp @xform[table]
     @xform[table][:inspect].each do |fld|
       data[fld] = case sym
         when :in  then data[fld].inspect
         when :out then eval(data[fld])  # unsafe
       end
     end
-# x2 = x1[:yaml]
-# puts "x2 yaml = #{x2.inspect}"
-# puts "*** data = #{data.inspect}"
     @xform[table][:yaml].each do |fld|
-# puts "DATA [#{fld.inspect}] = #{data[fld].inspect}"
       data[fld] = case sym
         when :in  then data[fld].to_yaml
         when :out then YAML.load(data[fld])
       end
     end
-# puts "*** data = #{data.inspect}"
   end
 
   def get_inherited(parent_hash, parent_class_name)
@@ -279,15 +232,11 @@ pp @xform[table]
     hash = parent_hash              # will change in loop
     transform(table, data, :out)
     loop do  # arbitrary levels of inheritance
-puts "**** loop: hash1 = #{hash.inspect}"
       break if child.nil?
       class_name = child
       table = table_name(child)
-puts "**** loop: table = #{table.inspect}"
       ds = @db[table]
-puts "**** loop: query = #{{parent_id => hash[parent_id]}}"
       hash = ds.filter(parent_id => hash[parent_id]).first
-puts "**** loop: hash2 = #{hash.inspect}"
       data.update(hash)
       transform(table, data, :out)  # out from db
       child = hash[:child]
@@ -306,12 +255,20 @@ puts "**** loop: hash2 = #{hash.inspect}"
     list = ds.to_a.sort_by { rand }
     list = list[0..num-1]
 
-puts "LIST = "
-pp list
-
     list.map do |hash|
       get_inherited(hash, "Question")
     end
+  end
+
+  def update_stats(qid, outcome)
+    stats = @db[:stats]
+    stat = stats.filter(:question_id => qid).first
+    stat = stats.insert(:question_id => qid, :rights => 0, :wrongs => 0) if stat.nil?
+    now = Time.now
+    which_count = outcome ? :rights : :wrongs
+    count = stat[which_count]
+    which_stamp = outcome ? :last_right : :last_wrong
+    stats.where(:question_id => qid).update(which_count => count + 1, which_stamp => now)
   end
 
   private 

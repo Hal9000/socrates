@@ -23,7 +23,12 @@ end
 
 Topic.current = topic
 
-session.ask_questions(topic)
+print "How many questions? "
+STDOUT.flush
+max = Integer(gets.chomp)
+
+session.ask_questions(topic, max)
+
 session.report
 
 puts

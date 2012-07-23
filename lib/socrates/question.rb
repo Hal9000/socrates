@@ -1,9 +1,11 @@
-abort unless Socrates.is_a? Class
-
 class Socrates::Question
+  attr_reader :question_id
+
   def self.make(data)
-    text, correct = data.values_at(:text, :correct_answer)
-    self.new(text, correct)
+    qid, *args = data.values_at(:question_id, :text, :correct_answer)
+    question = self.new(*args)
+    question.instance_eval { @question_id = qid }
+    question
   end
 
   def initialize(text, correct_answer)
@@ -20,9 +22,5 @@ class Socrates::Question
 
   def wrong?
     ! right?
-  end
-
-  def record_stats
-    # Thru abstracted data store
   end
 end

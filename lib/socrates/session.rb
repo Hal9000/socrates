@@ -1,5 +1,3 @@
-abort unless Socrates.is_a? Class
-
 class Socrates::Session
   def initialize
     @store = Socrates::DataStore.new
@@ -7,6 +5,10 @@ class Socrates::Session
 
   def get_questions(*args)
     @store.get_questions(*args)
+  end
+ 
+  def update_stats(qid, outcome)
+    @store.update_stats(qid, outcome)
   end
   
   def select_topic

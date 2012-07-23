@@ -1,5 +1,13 @@
 require 'pp'
 
+if RUBY_PLATFORM == "java"
+  class String
+    def ord
+      self[0]  # old Ruby 1.8 behavior
+    end
+  end
+end
+
 class Socrates::Question
 
   BadEntry = Exception.new("Invalid response")
@@ -28,6 +36,10 @@ class Socrates::Question
     puts
     return outcome
   end
+
+  def update_stats(qid, outcome)
+    
+  end
 end
 
 class Socrates::Selection
@@ -42,7 +54,7 @@ class Socrates::Selection
     print "Choices = "
     STDOUT.flush
     get_response
-puts "correct = #{@correct_answer.inspect}"
+# puts "correct = #{@correct_answer.inspect}"
     report(@choices.values_at(*@correct_answer).inspect)
   end
 
@@ -168,6 +180,7 @@ class Socrates::Session
     list.each do |question|
       outcome = question.ask
       @outcomes[outcome] += 1
+      update_stats(question.question_id, outcome)
     end
   end
 
