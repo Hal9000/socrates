@@ -19,7 +19,7 @@ class Socrates::Topic
   end
 
   def inspect
-    "#@path [#{@children.size}]"
+    @desc || "All topics" # "#@path [#{@children.size}]"
   end
 
   def to_s

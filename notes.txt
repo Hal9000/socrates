@@ -1,0 +1,141 @@
+Slides Outline
+--------------
+1. Title page
+2. Overview
+3. Prereqs
+4. Assumed background
+5. Tools and best practices
+6. Tips, tricks, and tidbits
+7. Socrates in overview
+   purpose, structure, existing code, goals
+   why the data store is so weird
+8. Whirlwind tours: Jruby, Swing, Sequel, Sinatra
+9. 1, 2, 3... Go!
+
+Presentation:
+-------------
+windows - vim/NerdTree, cmdline, sequel, sqlite, irb
+slides - files/classes, ...
+links - sinatra tutorial/cheat, swing tutorial/cheat, ...
+
+IDIC
+
+Stuff to know:
+--------------
+reopened classes
+class skeleton
+$LOAD_PATH trick
+$SAFE in a thread
+Integer vs to_i
+to_s vs to_str
+puts/print/p (to_s, inspect)
+inspect and eval
+STDOUT.flush
+trailing naked hash
+#!/usr/bin/env ruby
+# encoding: UTF-8
+class << self
+bang doesn't necessarily mean mutator
+Bundler (spec, install, setup, require)
+new hash notation
+a class is just a constant (x = A::B::C)
+rescue modifier
+scan is similar to split
+know your 'self'
+instance_eval, etc.
+values_at is your friend
+*args tricks, e.g. z = [*x, *y]
+shift/unshift (left or first)
+push/pop (right or last)
+returning data from threads 
+the "empty case"
+strings and symbols
+Symbol#to_proc
+the Sequel debugging trick
+(Bart Simpson and organ transplants)
+
+# Avoiding the empty hash:
+def meth(*args, hash)
+  unless hash.is_a? Hash
+    args << hash
+    hash = {}
+  end
+  p *args
+  p hash
+end
+
+
+
+
+Scattered classes
+ - isolate function by file
+Class skeleton
+allocate
+
+TopicStore - when you define the class, it loads the data
+
+“Computer science is the discipline that believes all problems can be solved with one more level of indirection” –. Dennis DeBruler 
+
+There are only two hard things in Computer Science: cache invalidation and naming things. -Phil Karlton
+
+Niels Bohr: Your theory is crazy...
+"Though this be madness..."
+PassiveRecord
+  - models are object models, not db models
+  - isolate db *and* ORM
+  - don't clutter model code
+  - don't clutter models at runtime
+  - inheritance: make and create
+  
+
+How to add a question type
+
+------
+hash = {this: "that"}  
+def meth(a, b, *c, d)  # d can be a (naked) hash
+# but old style is:
+def meth(a, b, c, d)   # where c must be bracketed
+
+Does sequel console work for JRuby?
+
+
+/Users/Hal/top5/socrates/vendor/bundle/ruby/1.9.1/gems/sequel-3.36.1/lib/sequel/sql.rb
+defines a to_s(ds) method - bleah?
+
+{:foo => Integer}.to_yaml gives an error
+
+"jdbc:sqlite:socrates.db" -- No // in Java
+
+JRuby doesn't know ord or modern str[0]
+JRuby doesn't know $SAFE
+
+Swing:
+------
+camelCase = snake_case
+.get_foo = .foo
+.set_foo = .foo =
+.isFoo   = .is_foo = .is_foo?
+
+
+Possible options for questions:
+  :nocase  Case insensitive
+  :damerau Damerau-Levenshtein distance
+  :nopunc  Ignore any punctuation
+  :nospace Ignore all spaces
+  (By default - strip only leading/trailing spaces)
+  :random  Choices are randomized
+
+Future ideas:
+  Question options
+  Point values for questions
+  Author field for questions
+  Multi-user support
+  Sophisticated question presentation algorithm
+
+
+Semantic versioning boils down to:
+
+    PATCH 0.0.x level changes for implementation level detail changes, such as small bug fixes
+    MINOR 0.x.0 level changes for any backwards compatible API changes, such as new functionality/features
+    MAJOR x.0.0 level changes for backwards incompatible API changes, such as changes that will break existing users code if they update
+

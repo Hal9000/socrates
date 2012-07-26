@@ -1,5 +1,6 @@
 class Socrates
   Version = '0.0.1'
+  AppRoot = File.expand_path(File.join(File.dirname(__FILE__), '..'))
 
   class Session               # A drill or Q&A session
   end
@@ -29,7 +30,7 @@ class Socrates
   end
 end
 
-$: << File.expand_path(File.join(File.dirname(__FILE__), '../lib'))
+$: << Socrates::AppRoot + '/lib'
 
 require 'socrates/session'
 require 'socrates/question'

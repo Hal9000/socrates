@@ -6,13 +6,12 @@ $: << File.expand_path(File.join(File.dirname(__FILE__), '../lib'))
 
 require 'rubygems'
 require 'bundler/setup'
-
 Bundler.require(:default)
 
 require 'pp'
 
 require 'socrates'
-require 'ui/dumbtext'
+require 'socrates/ui/text/interface'
 
 session = Socrates::Session.new
 topic = session.select_topic

@@ -7,8 +7,10 @@ Topic = Socrates::Topic
 
 Yaml = "Yaml"
 
+# data_dir = "#{Socrates::AppRoot}/data"
+# Dir.chdir(data_dir)  # so that .db will be placed there
+
 class Socrates::TopicStore
-# puts "--- Entering TopicStore class def"
   class << self
     attr_accessor :store  # basically a hash; path=>topic
     attr_accessor :count
@@ -16,7 +18,8 @@ class Socrates::TopicStore
 
   @count = 0
 
-  @store = YAML.load(File.read("topics.yaml")) rescue {}
+  # First time through, the file may be nonexistent
+  @store = YAML.load(File.read(Socrates::AppRoot + "/data/topics.yaml")) rescue {}
 
   LowerAlphaNum = /[a-z][a-z0-9_]*/
   BadName = Exception.new("Invalid pathname")
@@ -60,12 +63,20 @@ class Socrates::TopicStore
     @store[path]
   end
 
-  def self.load(file="topics.yaml")
+  def self.load(file="#{Socrates::AppRoot}/data/topics.yaml")
     @store = YAML.load(file)
   end
 
-  def self.save(file="topics.yaml")
+  def self.save(file="#{Socrates::AppRoot}/data/topics.yaml")
     File.open(file, "w") {|f| f.puts @store.to_yaml }
+  end
+
+  def to_s
+    @desc
+  end
+
+  def inspect
+    @desc
   end
 end
 
@@ -78,7 +89,8 @@ class Socrates::DataStore
     else
       prefix = "sqlite://"
     end
-    @db = ::Sequel.connect("#{prefix}socrates.db")
+    db_string = "#{prefix}data/socrates.db"
+    @db = ::Sequel.connect(db_string)
     @xform = {}
     @fields = {}
     metadata_found = nil
@@ -125,7 +137,11 @@ class Socrates::DataStore
 #   # Not implemented yet
 # end
 
-  def make_table(table, args, others={})
+  def make_table(table, *args, others)
+    unless others.is_a? Hash
+      args << others
+      others = {}
+    end
     table = table.to_s       # probably already was
     table_sym = table.to_sym
     @fields[table_sym] = args + others.keys
@@ -263,7 +279,11 @@ class Socrates::DataStore
   def update_stats(qid, outcome)
     stats = @db[:stats]
     stat = stats.filter(:question_id => qid).first
-    stat = stats.insert(:question_id => qid, :rights => 0, :wrongs => 0) if stat.nil?
+    if stat.nil?
+      data = {:question_id => qid, :rights => 0, :wrongs => 0}
+      stats.insert(:question_id => qid, :rights => 0, :wrongs => 0) 
+      stat = data
+    end
     now = Time.now
     which_count = outcome ? :rights : :wrongs
     count = stat[which_count]
