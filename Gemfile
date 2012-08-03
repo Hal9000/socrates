@@ -2,8 +2,11 @@ source :rubygems
 gemspec
 
 gem 'rake'
-gem 'sqlite3'
+if RUBY_PLATFORM == "java"
+  gem "jdbc-sqlite3"
+  gem "profligacy"
+else
+  gem 'sqlite3'
+end
 gem 'sequel'
 
-#gem 'evernote'
-#gem 'thrift_client'

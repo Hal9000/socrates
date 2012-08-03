@@ -1,6 +1,12 @@
 #!/usr/bin/env ruby
 # encoding: UTF-8
 
+abort "Use JRuby to run this!" unless RUBY_PLATFORM == "java"
+opts = ENV["JRUBY_OPTS"] || ""
+unless opts.include? "--1.9"
+  abort "Please include '--1.9' in JRUBY_OPTS" 
+end
+
 $: << File.expand_path(File.join(File.dirname(__FILE__), '../lib'))
 
 require 'rubygems'
@@ -10,11 +16,6 @@ require 'socrates'
 # require 'socrates/ui/swing/interface'
 
 ######################
-
-abort "Use JRuby to run this!" unless RUBY_PLATFORM == "java"
-#unless ENV["JRUBY_OPTS"].include? "--1.9"
-#  abort "Please include '--1.9' in JRUBY_OPTS" 
-#end
 
 require 'java'
 
@@ -26,6 +27,8 @@ swing_classes = %w(JFrame JButton JList JSplitPane
 swing_classes.each do |c|
   java_import "javax.swing.#{c}"
 end
+
+include Java
 
 import javax.swing.JFrame
 import javax.swing.JLabel
@@ -55,26 +58,32 @@ layout3 = <<EOF
   [ (100,340)*panel3 | ^go   ]
 EOF
 
-c = c2 = c3 = nil
+c1 = c2 = c3 = nil
 topic_root = Socrates::TopicStore::Root
 tree_root = nil
 
 ui = Swing::LEL.new(JFrame, layout) do |c, i|
-  c.panel1 = Swing::LEL.new(JPanel, "[tree]") do |c2, i2|
+  c1 = c
+  c1.panel1 = Swing::LEL.new(JPanel, "[tree]") do |d, i2|
+    c2 = d
     tree_root = DefaultMutableTreeNode.new(topic_root)
     c2.tree = JTree.new(tree_root)
   end.build :auto_create_container_gaps => false
-  c.panel2 = Swing::LEL.new(JPanel, layout3) do |c3, i3|
+  c1.panel2 = Swing::LEL.new(JPanel, layout3) do |e, i3|
+    c3 = e
     c3.label = JLabel.new "How many questions?"
     c3.many = JTextField.new 4
     c3.go   = JButton.new "Go!"
-    c3.panel3 = Swing::LEL.new(JPanel, "[_]") do |c4, i4|
+    c3.panel3 = Swing::LEL.new(JPanel, "[_]") do |f, i4|
     end.build :auto_create_container_gaps => false
   end.build :auto_create_container_gaps => false
 end
 
 ui.build(:args => "Simple LEL Example")
 ui.container.default_close_operation = JFrame::EXIT_ON_CLOSE
+p c1
+p c2
+p c3
 c3.go.add_action_listener { puts c3.many.text; puts c2.tree.selection_path }
 
 topic_root.children.each {|ch| add_node(tree_root, ch) }

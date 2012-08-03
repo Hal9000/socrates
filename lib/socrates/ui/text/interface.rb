@@ -36,10 +36,6 @@ class Socrates::Question
     puts
     return outcome
   end
-
-  def update_stats(qid, outcome)
-    
-  end
 end
 
 class Socrates::Selection
