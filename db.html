@@ -1,0 +1,97 @@
+<html>
+<body>
+
+<center><h1>Thinking about data storage: Databases, ORMs, and separation of concerns<h1></center>
+<br>
+<br>
+
+<h3>Introduction</h3>
+
+<ol>
+  <li>ORMs are good -- they help fix the disconnect between OOP and the database. But
+      I don't always like the way they work.</li>
+  <li>Inheritance is very brute-force</li>
+    <ul>
+      <li>What if you had to inherit from IO?</li>
+      <li>If you inherit from ActiveRecord::Base, you can't inherit from anything else...</li>
+      <li>...unless you move the ActiveRecord inheritance to the top of the hierarchy, possibly even making          descendants of classes that don't need to be</li>
+      <li>ActiveRecord::Base adds 134 instance methods to your class</li>
+      <li>I also dislike AR's lengthy method names and pathological use of method_missing</li>
+      <li>AR encourages higher-level thinking, but arguably not high enough</li>
+    </ul>
+  <li>I don't like cluttering the model with database stuff</li>
+    <ul>
+      <li>models should be object models, not database models</li>
+      <li>database logic distracts from the real object behavior</li>
+      <li>what if I want to change ORMs later?</li>
+    </ul>
+</ol>
+
+<hr>  <!-- -------------------------------------------- -->
+
+<h3>A better way?</h3>
+
+<ol>
+  <li>Just as the ORM tries to hide the database, our code should try to hide the ORM</li>
+  <li>Encapsulating behavior at a high level (abstracting) helps the situation</li>
+  <li>I have played with AR and DataMapper and glanced at Ambition. My favorite so far is Sequel.</li>
+  <li>But if I had time, I would develop yet another way. I once worked with Ezra Zygmuntowicz on "PassiveRecord" (not the one on github now), but we ran out of steam.</li>
+  <li>Sub-digression: What's the receiver?</li>
+    <ul>
+      <li>Sometimes the receiver seems clear (but not always).<br>
+          <tt>dog.wag(tail)  # not tail.wag(dog)</tt></li>
+      <li>We do this:<br>
+          <tt>puts "Hello"; STDERR.puts "Something went wrong"</tt></li>
+      <li>But we <i>could</i> have done this:<br>
+          <tt>"Hello".puts; "Something went wrong".puts(STDERR)</tt></li>
+      <li>Marshal is consistent:<br>
+          <tt>str = Marshal.dump(obj); obj = Marshal.load(str)</tt></li>
+      <li>YAML is not:<br>
+          <tt>str = obj.to_yaml; obj = YAML.load(str)</tt></li>
+      <li>Note that YAML thus "pollutes" every object with (at least) a to_yaml method</li>
+      <li>To a much greater extent, ActiveRecord pollutes the object with class and instance methods</li>
+      <li>I do like saying obj.save, but I'm not sure it's worth it</li>
+      <li>I think I'd rather say: db.save(obj)</li>
+    </ul>
+</ol>
+
+<hr>  <!-- -------------------------------------------- -->
+
+<h3>Ideas and principles</h3>
+
+<ol>
+   <li>So some of my principles are:</li>
+     <ul>
+       <li>Decouple the model from the ORM/database as much as possible</li>
+       <li>Add the fewest possible number of methods and attributes to the model's class and instance</li>
+       <li>Centralize all information (including associations) in a kind of registry (data store)</li>
+       <li>As far as possible, hide even those details</li>
+     </ul>
+   <li>This blog post by Piotr Solnica is excellent: <br>
+       <tt>http://solnic.eu/2011/08/01/making-activerecord-models-thin.html</tt>
+   <li>And also Avdi Grimm's comments, "The trouble with ActiveRecord" at:<br>
+       <tt>http://objectsonrails.com/#ID-317548a9-552e-47ce-9aac-5e8d656511fc</tt></li>
+</ol>
+
+<hr>  <!-- -------------------------------------------- -->
+
+<h3>More ideas</h3>
+<ol>
+  <li>The Rails mantra "convention over configuration" is a good principle in general</li>
+  <li>Let the table name default to the class name - forget plurals</li>
+  <li>Append _id for the id and make it the primary key</li>
+  <li>Let id be an alias for CLASS_id</li>
+  <li>Let fields default to String type (the most common)</li>
+  <li>Let xxx_id fields default to Integer (understood to be foreign keys)</li>
+  <li>Unsure: Let xxx_at fields default to DateTime and be handled automatically</li>
+  <li>Inheritance: Look up the child record by parent id</li>
+  <li>Rubylike fields: Array, Hash, YAML, more? Non-queryable</li>
+  <li>Concise notation for defining tables, associations</li>
+  <li>has_one and belongs_to are not two associations, but one</li>
+  <li>Determine inheritance structure through Ruby reflection</li>
+  <li>After all metadata specified, discover relationships, add extra fields, and build tables</li>
+</ol>
+
+</body>
+</html>
+
